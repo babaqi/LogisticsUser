@@ -1,0 +1,20 @@
+package com.logisticsUser.serviceBean;
+
+import java.util.List;
+
+import com.logisticsUser.model.ContextModel;
+
+public class ContextBean extends BaseBean {
+
+	public List<ContextModel> getContext() {
+		return context;
+	}
+
+	public void setContext(List<ContextModel> context) {
+		this.context = context;
+	}
+
+	private List<ContextModel> context;
+
+
+}

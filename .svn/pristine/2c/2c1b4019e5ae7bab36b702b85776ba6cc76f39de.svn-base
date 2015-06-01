@@ -1,0 +1,262 @@
+package com.logisticsUser.adapter;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.logistics.R;
+import com.logisticsUser.activity.LoginActivity;
+import com.logisticsUser.http.RequestManager;
+import com.logisticsUser.http.RequestManager.ResponseInterface;
+import com.logisticsUser.model.ContextModel;
+import com.logisticsUser.serviceBean.ContextBean;
+import com.logisticsUser.utils.SharePreferenceUtils;
+
+public class ShowListViewAdapter extends BaseAdapter implements ResponseInterface {
+	private Context mContext;
+	private List<ContextModel> mContextList;
+	public ProgressDialog mProgress = null;
+	private int num;
+	
+	public List<ContextModel> getmContextList() {
+		return mContextList;
+	}
+
+	public void setmContextList(List<ContextModel> mContextList) {
+		this.mContextList = mContextList;
+	}
+
+	public ShowListViewAdapter(Context context, List<ContextModel> contextList) {
+		this.mContext = context;
+		this.mContextList = contextList;
+
+	}
+
+	@Override
+	public int getCount() {
+		// TODO Auto-generated method stub
+		return mContextList.size();
+	}
+
+	@Override
+	public Object getItem(int arg0) {
+		// TODO Auto-generated method stub
+		return mContextList.get(arg0);
+	}
+
+	@Override
+	public long getItemId(int arg0) {
+		// TODO Auto-generated method stub
+		return arg0;
+	}
+
+	@Override
+	public View getView(final int position, View convertView, ViewGroup parent) {
+		// TODO Auto-generated method stub
+		final HolderView mHolder;
+		if (convertView == null) {
+			mHolder = new HolderView();
+			convertView = LayoutInflater.from(mContext).inflate(
+					R.layout.show_listview_adapter, null);
+			mHolder.serialNumber = (TextView) convertView
+					.findViewById(R.id.serialNumber);
+			mHolder.type = (TextView) convertView
+					.findViewById(R.id.type);
+			mHolder.time = (TextView) convertView
+					.findViewById(R.id.time);
+			mHolder.shopName = (TextView) convertView
+					.findViewById(R.id.shopName);
+			mHolder.shopTel = (TextView) convertView
+					.findViewById(R.id.shopTel);
+			mHolder.shopAddress = (TextView) convertView
+					.findViewById(R.id.shopAddress);
+			mHolder.userAddress = (TextView) convertView
+					.findViewById(R.id.userAddress);
+			mHolder.userTel = (TextView) convertView
+					.findViewById(R.id.userTel);
+			mHolder.price = (TextView) convertView
+					.findViewById(R.id.price);
+			mHolder.amountMoney = (TextView) convertView
+					.findViewById(R.id.amountMoney);
+			mHolder.contextInfomation = (TextView) convertView.findViewById(R.id.context_infomation);
+			mHolder.cancel_btn = (Button) convertView
+					.findViewById(R.id.cancel_btn);
+			mHolder.accept_btn = (Button) convertView
+					.findViewById(R.id.accept_btn);
+			convertView.setTag(mHolder);
+		} else {
+			mHolder = (HolderView) convertView.getTag();
+		}
+		
+		mHolder.serialNumber.setText(position+"号");
+		if(mContextList.get(position).getContext_type()==0)
+		{
+			mHolder.type.setText("待确认");
+			mHolder.accept_btn.setText("接受订单");
+		}
+		if(mContextList.get(position).getContext_type()==1)
+		{
+			mHolder.type.setText("取货中");
+			mHolder.accept_btn.setText("已取货");
+		}
+		if(mContextList.get(position).getContext_type()==2)
+		{
+			mHolder.type.setText("配送中");
+			mHolder.accept_btn.setText("已送达");
+		}
+		if(mContextList.get(position).getContext_type()==3)
+		{
+			mHolder.type.setText("历史");
+			mHolder.accept_btn.setVisibility(View.GONE);
+			mHolder.cancel_btn.setVisibility(View.GONE);
+		}
+		
+		mHolder.time.setText("下单时间:"+mContextList.get(position).getContext_timer().toString());
+		mHolder.shopName.setText("店铺名称:"+mContextList.get(position).getContext_shop_name());
+		mHolder.shopTel.setText(mContextList.get(position).getContext_shop_tel());
+//		mHolder.shopAddress.setText();
+		mHolder.userAddress.setText("用户地址:"+mContextList.get(position).getContext_address());
+		mHolder.userTel.setText(mContextList.get(position).getContext_phone()) ;
+		mHolder.price.setText(mContextList.get(position).getContext_price());
+		mHolder.contextInfomation.setText("内容:"+mContextList.get(position).getContext_infomation());
+		mHolder.amountMoney .setText(mContextList.get(position).getContext_amountofmoney());
+
+		
+		
+		
+		
+	
+//		mContextList.get(position).getContext_cityid()
+//		mContextList.get(position).getContext_id()
+//		mContextList.get(position).getContext_userid()
+		mHolder.cancel_btn.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		mHolder.accept_btn.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				if(mContextList.get(position).getContext_type()==0)
+				{
+					showProgress();
+					Map<String, Object> map = new HashMap<String, Object>();
+					RequestManager manager = new RequestManager();
+					map.put("context_id",String.valueOf(mContextList.get(position).getContext_id()));
+					map.put("state",String.valueOf(1));
+					SharePreferenceUtils share = new SharePreferenceUtils(mContext);
+					map.put("userid", share.getInt("userId", 0));
+					map.put("username", share.getString("userName", "").toString());
+					
+					manager.setResponseListener(ShowListViewAdapter.this);
+					manager.requestRobOrder(map);
+					num=position;
+				}
+				if(mContextList.get(position).getContext_type()==1)
+				{
+					showProgress();
+					Map<String, Object> map = new HashMap<String, Object>();
+					RequestManager manager = new RequestManager();
+					map.put("context_id",String.valueOf(mContextList.get(position).getContext_id()));
+					map.put("state",String.valueOf(2));
+					map.put("userid",String.valueOf(mContextList.get(position).getContext_userid()));
+					manager.setResponseListener(ShowListViewAdapter.this);
+					manager.requestUpdate(map);
+					num=position;
+				}
+				if(mContextList.get(position).getContext_type()==2)
+				{
+					showProgress();
+					Map<String, Object> map = new HashMap<String, Object>();
+					RequestManager manager = new RequestManager();
+					map.put("context_id",String.valueOf(mContextList.get(position).getContext_id()));
+					map.put("state",String.valueOf(3));
+					map.put("userid",String.valueOf(mContextList.get(position).getContext_userid()));
+					manager.setResponseListener(ShowListViewAdapter.this);
+					manager.requestUpdate(map);
+					num=position;
+				}
+				
+				
+			}
+		});
+		
+		
+		
+		return convertView;
+	}
+
+	class HolderView {
+		TextView serialNumber, type, time, shopName, shopTel, shopAddress,
+				userAddress, userTel, price, amountMoney, contextInfomation;
+		Button cancel_btn, accept_btn;
+
+	}
+
+	
+	@Override
+	public <T> void successResponse(T parsedGSON, int tag) {
+		// TODO Auto-generated method stub
+		if (parsedGSON != null) {
+
+			ContextBean contextBean = (ContextBean) parsedGSON;
+			if (contextBean.getRetcode().equals("0")) {
+				mContextList.remove(num);
+				ShowListViewAdapter.this.notifyDataSetChanged();
+				
+			} else {
+				Toast.makeText(mContext, "请求失败！", 5000).show();
+
+			}
+
+		}
+		stopProgress();
+		
+	}
+
+	@Override
+	public void errorResonse(String retmeg, int tag) {
+		// TODO Auto-generated method stub
+		Toast.makeText(mContext, "操作失败！", Toast.LENGTH_SHORT).show();
+		stopProgress();
+	}
+	
+	/**
+	 * progressDialog的展示
+	 */
+	public void showProgress() {
+		if (mContext != null) {
+			mProgress = new ProgressDialog(mContext);
+			mProgress.setMessage("正在努力加载中...");
+			mProgress.setCancelable(true);
+			mProgress.show();
+		}
+	}
+
+	/**
+	 * progressDialog的消失
+	 */
+	public void stopProgress() {
+		if (mProgress != null) {
+			mProgress.dismiss();
+			mProgress = null;
+		}
+	}
+}

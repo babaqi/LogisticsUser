@@ -1,0 +1,382 @@
+package com.logisticsUser.adapter;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.net.wifi.WifiConfiguration.Status;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.logistics.R;
+import com.logisticsUser.commen.Constants;
+import com.logisticsUser.http.RequestManager;
+import com.logisticsUser.http.RequestManager.ResponseInterface;
+import com.logisticsUser.model.ContextModel;
+import com.logisticsUser.serviceBean.ContextBean;
+import com.logisticsUser.utils.SharePreferenceUtils;
+
+public class ShowListViewAdapter extends BaseAdapter implements
+		ResponseInterface {
+	private Context mContext;
+	private List<ContextModel> mContextList;
+	private String mStatus;
+	public ProgressDialog mProgress = null;
+	private int num;
+	private AlertDialog mDlg;
+	private int removeNum = 0;
+	private Boolean isRemove = false;
+
+	public List<ContextModel> getmContextList() {
+		return mContextList;
+	}
+
+	public void setmContextList(List<ContextModel> mContextList) {
+		this.mContextList = mContextList;
+	}
+
+	public ShowListViewAdapter(Context context, List<ContextModel> contextList,
+			String status) {
+		this.mContext = context;
+		this.mContextList = contextList;
+		this.mStatus = status;
+	}
+
+	@Override
+	public int getCount() {
+		// TODO Auto-generated method stub
+		return mContextList.size();
+	}
+
+	@Override
+	public Object getItem(int arg0) {
+		// TODO Auto-generated method stub
+		return mContextList.get(arg0);
+	}
+
+	@Override
+	public long getItemId(int arg0) {
+		// TODO Auto-generated method stub
+		return arg0;
+	}
+
+	@Override
+	public View getView(final int position, View convertView, ViewGroup parent) {
+		// TODO Auto-generated method stub
+		final HolderView mHolder;
+		if (convertView == null) {
+			mHolder = new HolderView();
+			convertView = LayoutInflater.from(mContext).inflate(
+					R.layout.show_listview_adapter, null);
+			mHolder.serialNumber = (TextView) convertView
+					.findViewById(R.id.serialNumber);
+			mHolder.type = (TextView) convertView.findViewById(R.id.type);
+			mHolder.time = (TextView) convertView.findViewById(R.id.time);
+			mHolder.shopName = (TextView) convertView
+					.findViewById(R.id.shopName);
+			mHolder.shopTel = (TextView) convertView.findViewById(R.id.shopTel);
+			mHolder.shopAddress = (TextView) convertView
+					.findViewById(R.id.shopAddress);
+			mHolder.userAddress = (TextView) convertView
+					.findViewById(R.id.userAddress);
+			mHolder.userTel = (TextView) convertView.findViewById(R.id.userTel);
+			mHolder.price = (TextView) convertView.findViewById(R.id.price);
+			mHolder.amountMoney = (TextView) convertView
+					.findViewById(R.id.amountMoney);
+			mHolder.contextInfomation = (TextView) convertView
+					.findViewById(R.id.context_infomation);
+			mHolder.cancel_btn = (Button) convertView
+					.findViewById(R.id.cancel_btn);
+			mHolder.accept_btn = (Button) convertView
+					.findViewById(R.id.accept_btn);
+			// 日历控件
+			mHolder.MenuNum = (TextView) convertView.findViewById(R.id.MemuNum);
+			// mHolder.DateEt = (EditText)
+			// convertView.findViewById(R.id.dateEt);
+			// mHolder.datePicker = (DatePicker) convertView
+			// .findViewById(R.id.datePicker);
+			mHolder.Relay_rili = (RelativeLayout) convertView
+					.findViewById(R.id.rili_relay);
+			mHolder.OtherLin = (LinearLayout) convertView
+					.findViewById(R.id.OtherLin);
+
+			convertView.setTag(mHolder);
+		} else {
+			mHolder = (HolderView) convertView.getTag();
+		}
+
+		if (mStatus.equals("3") || mStatus.equals("4")) {
+			mHolder.cancel_btn.setVisibility(View.GONE);
+
+		}
+		// if (mStatus.equals("3")) {
+		// mHolder.Relay_rili.setVisibility(View.VISIBLE);
+		// mHolder.OtherLin.setVisibility(View.GONE);
+		// }
+		mHolder.serialNumber.setText(position + 1 + "号");
+		if (mContextList.get(position).getContext_type() == 0) {
+			mHolder.type.setText("待确认");
+			mHolder.accept_btn.setText("接受订单");
+		}
+		if (mContextList.get(position).getContext_type() == 1) {
+			mHolder.type.setText("取货中");
+			mHolder.accept_btn.setText("已取货");
+		}
+		if (mContextList.get(position).getContext_type() == 2) {
+			mHolder.type.setText("配送中");
+			mHolder.accept_btn.setText("已送达");
+		}
+		if (mContextList.get(position).getContext_type() == 3) {
+			mHolder.type.setText("历史");
+			mHolder.accept_btn.setVisibility(View.GONE);
+			mHolder.cancel_btn.setVisibility(View.GONE);
+		}
+
+		mHolder.time.setText("下单时间:"
+				+ mContextList.get(position).getContext_timer().toString());
+		mHolder.shopName.setText("店铺名称:"
+				+ mContextList.get(position).getContext_shop_name());
+		mHolder.shopTel.setText(mContextList.get(position)
+				.getContext_shop_tel());
+		mHolder.shopTel.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				String tell = mContextList.get(position).getContext_shop_tel()
+						.toString();
+				// Intent intent = new Intent(Intent.ACTION_CALL,
+				// Uri.parse("tel:" + tell));
+
+				Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:"
+						+ tell));
+				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+				mContext.startActivity(intent);
+			}
+		});
+		// mHolder.shopAddress.setText();
+		mHolder.userAddress.setText("用户地址:"
+				+ mContextList.get(position).getContext_address());
+		mHolder.userTel.setText(mContextList.get(position).getContext_phone());
+		mHolder.userTel.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				String tell = mContextList.get(position).getContext_phone();
+				// Intent intent = new Intent(Intent.ACTION_CALL,
+				// Uri.parse("tel:" + tell));
+
+				Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:"
+						+ tell));
+				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+				mContext.startActivity(intent);
+			}
+		});
+		mHolder.price.setText(mContextList.get(position).getContext_price());
+		mHolder.contextInfomation.setText("内容:"
+				+ mContextList.get(position).getContext_infomation());
+		mHolder.amountMoney.setText(mContextList.get(position)
+				.getContext_amountofmoney());
+
+		// mContextList.get(position).getContext_cityid()
+		// mContextList.get(position).getContext_id()
+		// mContextList.get(position).getContext_userid()
+		mHolder.cancel_btn.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				String id = String.valueOf(mContextList.get(position)
+						.getContext_id());
+				removeNum = position;
+				isRemove = true;
+				// 弹出是否确认撤销的提示
+				createDialog(id);
+
+			}
+		});
+
+		mHolder.accept_btn.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				if (mContextList.get(position).getContext_type() == 0) {
+					showProgress();
+					Map<String, Object> map = new HashMap<String, Object>();
+					RequestManager manager = new RequestManager();
+					map.put("context_id", String.valueOf(mContextList.get(
+							position).getContext_id()));
+					map.put("shop_id", String.valueOf(mContextList
+							.get(position).getContext_shop_id()));
+					map.put("state", String.valueOf(1));
+					SharePreferenceUtils share = new SharePreferenceUtils(
+							mContext);
+					map.put("userid", share.getString("userId", ""));
+					map.put("username", share.getString("userName", "")
+							.toString());
+
+					manager.setResponseListener(ShowListViewAdapter.this);
+					manager.requestRobOrder(map);
+					num = position;
+				}
+				if (mContextList.get(position).getContext_type() == 1) {
+					showProgress();
+					Map<String, Object> map = new HashMap<String, Object>();
+					RequestManager manager = new RequestManager();
+					map.put("context_id", String.valueOf(mContextList.get(
+							position).getContext_id()));
+					map.put("state", String.valueOf(2));
+					map.put("userid", String.valueOf(mContextList.get(position)
+							.getContext_userid()));
+					manager.setResponseListener(ShowListViewAdapter.this);
+					manager.requestUpdate(map);
+					num = position;
+				}
+				if (mContextList.get(position).getContext_type() == 2) {
+					showProgress();
+					Map<String, Object> map = new HashMap<String, Object>();
+					RequestManager manager = new RequestManager();
+					map.put("context_id", String.valueOf(mContextList.get(
+							position).getContext_id()));
+					map.put("state", String.valueOf(3));
+					map.put("userid", String.valueOf(mContextList.get(position)
+							.getContext_userid()));
+					manager.setResponseListener(ShowListViewAdapter.this);
+					manager.requestUpdate(map);
+					num = position;
+				}
+
+			}
+		});
+
+		return convertView;
+	}
+
+	class HolderView {
+		TextView serialNumber, type, time, shopName, shopTel, shopAddress,
+				userAddress, userTel, price, amountMoney, contextInfomation;
+		Button cancel_btn, accept_btn;
+		TextView MenuNum;
+		EditText DateEt;
+		LinearLayout OtherLin;
+		RelativeLayout Relay_rili;
+		DatePicker datePicker;
+	}
+
+	@Override
+	public <T> void successResponse(T parsedGSON, int tag) {
+		// TODO Auto-generated method stub
+		if (parsedGSON != null) {
+
+			ContextBean contextBean = (ContextBean) parsedGSON;
+			if (contextBean.getRetcode().equals("0")) {
+				mContextList.remove(num);
+				ShowListViewAdapter.this.notifyDataSetChanged();
+
+			} else {
+				Toast.makeText(mContext, "没有更多订单！", 5000).show();
+
+			}
+
+			// if (isRemove == true) {
+			// mContextList.remove(removeNum);
+			// ShowListViewAdapter.this.notifyDataSetChanged();
+			// isRemove = false;
+			// }
+
+		}
+		stopProgress();
+
+	}
+
+	@Override
+	public void errorResonse(String retmeg, int tag) {
+		// TODO Auto-generated method stub
+		Toast.makeText(mContext, "请检查网络！", Toast.LENGTH_SHORT).show();
+		stopProgress();
+	}
+
+	/**
+	 * progressDialog的展示
+	 */
+	public void showProgress() {
+		if (mContext != null) {
+			mProgress = new ProgressDialog(mContext);
+			mProgress.setMessage("正在努力加载中...");
+			mProgress.setCancelable(true);
+			mProgress.show();
+		}
+	}
+
+	/**
+	 * progressDialog的消失
+	 */
+	public void stopProgress() {
+		if (mProgress != null) {
+			mProgress.dismiss();
+			mProgress = null;
+		}
+	}
+
+	private void createDialog(final String id) {
+		if (mDlg == null) {
+			mDlg = new AlertDialog.Builder(mContext).create();
+		}
+		mDlg.show();
+		// 点击对话框外部取消对话框显示
+		mDlg.setCanceledOnTouchOutside(true);
+		Window window = mDlg.getWindow();
+		// 设置窗口的内容页面,dialog_uploading.xml文件中定义view内容
+		window.setContentView(R.layout.dialog_unupload);
+		// 确定按钮
+		Button ok = (Button) window.findViewById(R.id.dlg_btn_ok);
+		Button no = (Button) window.findViewById(R.id.dlg_btn_no);
+
+		// 确认撤销监听
+		ok.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+
+				showProgress();
+				Map<String, Object> map = new HashMap<String, Object>();
+				RequestManager manager = new RequestManager();
+
+				map.put("context_id", id);
+				map.put("state", "5");
+
+				manager.setResponseListener(ShowListViewAdapter.this);
+
+				manager.requestUpdate(map);
+
+				mDlg.dismiss();
+
+			}
+		});
+		// 取消撤销监听
+		no.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mDlg.dismiss();
+			}
+		});
+	}
+}
